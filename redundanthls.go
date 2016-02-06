@@ -48,19 +48,15 @@ func getRedundantManifest(rawManifest string, hosts []string) string {
 
 func RedundantManifestFromUrl(url string, hosts []string) (string, error) {
 
-	if strings.HasSuffix(url, ".m3u8") {
-
-		res, err := goreq.Request{Uri: url}.Do()
-		if err != nil || res.StatusCode != 200 {
-			return "", nil
-		}
-		rawManifest, err := res.Body.ToString()
-		if err != nil {
-			return "", nil
-		}
-		redundantManifest := getRedundantManifest(rawManifest, hosts)
-		return redundantManifest, nil
+	res, err := goreq.Request{Uri: url}.Do()
+	if err != nil || res.StatusCode != 200 {
+		return "", err
 	}
-	return "", nil
+	rawManifest, err := res.Body.ToString()
+	if err != nil {
+		return "", err
+	}
+	redundantManifest := getRedundantManifest(rawManifest, hosts)
+	return redundantManifest, nil
 
 }
