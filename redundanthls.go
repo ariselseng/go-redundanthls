@@ -1,6 +1,7 @@
 package redundanthls
 
 import (
+	"errors"
 	"github.com/franela/goreq"
 	"strings"
 )
@@ -46,15 +47,28 @@ func getRedundantManifest(rawManifest string, hosts []string) string {
 	return redundantManifest
 }
 
+type error interface {
+	Error() string
+}
+
+func RedundantManifestFromString(rawManifest string, hosts []string) (string, error) {
+
+	if rawManifest == "" {
+		return "", errors.New("Manifest is empty")
+	}
+	redundantManifest := getRedundantManifest(rawManifest, hosts)
+	return redundantManifest, nil
+
+}
 func RedundantManifestFromUrl(url string, hosts []string) (string, error) {
 
 	res, err := goreq.Request{Uri: url}.Do()
 	if err != nil || res.StatusCode != 200 {
-		return "", err
+		return "", errors.New("Error retrieving manifest.")
 	}
 	rawManifest, err := res.Body.ToString()
 	if err != nil {
-		return "", err
+		return "", errors.New("Error getting the body of the manifest.")
 	}
 	redundantManifest := getRedundantManifest(rawManifest, hosts)
 	return redundantManifest, nil
