@@ -6,8 +6,9 @@ import (
 	"strings"
 )
 
-func getRawManifest(path string) (string, error) {
-	res, err := goreq.Request{Uri: path}.Do()
+// GetRawManifest returns body of url as string
+func GetRawManifest(url string) (string, error) {
+	res, err := goreq.Request{Uri: url}.Do()
 	if err != nil || res.StatusCode != 200 {
 		return "", err
 	}
@@ -17,8 +18,13 @@ func getRawManifest(path string) (string, error) {
 	}
 	return body, nil
 }
-func getRedundantManifest(rawManifest string, hosts []string) string {
+func getRedundantManifest(rawManifest string, hosts []string, maxLevel string) string {
 	var redundantManifest string
+	var hasFoundMaxLevel bool
+	var looksForMaxLevel bool
+	if maxLevel != "" {
+		looksForMaxLevel = true
+	}
 	rawLines := strings.Split(rawManifest, "\n")
 	// fmt.Println(rawLines[0])
 	var levelInfo string
@@ -33,9 +39,16 @@ func getRedundantManifest(rawManifest string, hosts []string) string {
 			} else {
 
 				if strings.HasSuffix(line, ".m3u8") {
-					for _, host := range hosts {
-						redundantManifest = redundantManifest + "\n" + levelInfo + "\nhttp://" + host + "/" + line
+
+					if looksForMaxLevel && !hasFoundMaxLevel || !looksForMaxLevel {
+						if strings.Contains(line, maxLevel) {
+							hasFoundMaxLevel = true
+						}
+						for _, host := range hosts {
+							redundantManifest = redundantManifest + "\n" + levelInfo + "\nhttp://" + host + "/" + line
+						}
 					}
+
 				} else {
 					redundantManifest = redundantManifest + "\n" + line
 				}
@@ -51,16 +64,19 @@ type error interface {
 	Error() string
 }
 
-func RedundantManifestFromString(rawManifest string, hosts []string) (string, error) {
+// RedundantManifestFromString returns redundant manifest from string
+func RedundantManifestFromString(rawManifest string, hosts []string, maxLevel string) (string, error) {
 
 	if rawManifest == "" {
 		return "", errors.New("Manifest is empty")
 	}
-	redundantManifest := getRedundantManifest(rawManifest, hosts)
+	redundantManifest := getRedundantManifest(rawManifest, hosts, maxLevel)
 	return redundantManifest, nil
 
 }
-func RedundantManifestFromUrl(url string, hosts []string) (string, error) {
+
+// RedundantManifestFromURL returns redundant manifest from url
+func RedundantManifestFromURL(url string, hosts []string) (string, error) {
 
 	res, err := goreq.Request{Uri: url}.Do()
 	if err != nil || res.StatusCode != 200 {
@@ -70,7 +86,7 @@ func RedundantManifestFromUrl(url string, hosts []string) (string, error) {
 	if err != nil {
 		return "", errors.New("Error getting the body of the manifest.")
 	}
-	redundantManifest := getRedundantManifest(rawManifest, hosts)
+	redundantManifest := getRedundantManifest(rawManifest, hosts, "")
 	return redundantManifest, nil
 
 }
