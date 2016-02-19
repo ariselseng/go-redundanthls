@@ -10,7 +10,7 @@ import (
 func GetRawManifest(url string) (string, error) {
 	res, err := goreq.Request{Uri: url}.Do()
 	if err != nil || res.StatusCode != 200 {
-		return "", err
+		return "", errors.New("Error retrieving raw manifest.")
 	}
 	body, err := res.Body.ToString()
 	if err != nil {
