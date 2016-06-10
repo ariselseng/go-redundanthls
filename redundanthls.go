@@ -18,7 +18,7 @@ func GetRawManifest(url string) (string, error) {
 	}
 	return body, nil
 }
-func getRedundantManifest(rawManifest string, hosts []string, maxLevel string) string {
+func getRedundantManifest(rawManifest string, hosts []string, maxLevel string, protocol string) string {
 	var redundantManifest string
 	var hasFoundMaxLevel bool
 	var looksForMaxLevel bool
@@ -45,7 +45,7 @@ func getRedundantManifest(rawManifest string, hosts []string, maxLevel string) s
 							hasFoundMaxLevel = true
 						}
 						for _, host := range hosts {
-							redundantManifest = redundantManifest + "\n" + levelInfo + "\nhttp://" + host + "/" + line
+							redundantManifest = redundantManifest + "\n" + levelInfo + "\n" + protocol + host + "/" + line
 						}
 					}
 
@@ -65,18 +65,18 @@ type error interface {
 }
 
 // RedundantManifestFromString returns redundant manifest from string
-func RedundantManifestFromString(rawManifest string, hosts []string, maxLevel string) (string, error) {
+func RedundantManifestFromString(rawManifest string, hosts []string, maxLevel string, protocol string) (string, error) {
 
 	if rawManifest == "" {
 		return "", errors.New("Manifest is empty")
 	}
-	redundantManifest := getRedundantManifest(rawManifest, hosts, maxLevel)
+	redundantManifest := getRedundantManifest(rawManifest, hosts, maxLevel, protocol)
 	return redundantManifest, nil
 
 }
 
 // RedundantManifestFromURL returns redundant manifest from url
-func RedundantManifestFromURL(url string, hosts []string) (string, error) {
+func RedundantManifestFromURL(url string, hosts []string, protocol string) (string, error) {
 
 	res, err := goreq.Request{Uri: url}.Do()
 	if err != nil || res.StatusCode != 200 {
@@ -86,7 +86,7 @@ func RedundantManifestFromURL(url string, hosts []string) (string, error) {
 	if err != nil {
 		return "", errors.New("Error getting the body of the manifest.")
 	}
-	redundantManifest := getRedundantManifest(rawManifest, hosts, "")
+	redundantManifest := getRedundantManifest(rawManifest, hosts, "", protocol)
 	return redundantManifest, nil
 
 }
